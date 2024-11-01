@@ -4,26 +4,120 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Shared Data App</title>
+  <style>
+    /* CSS styles remain the same */
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    #data {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #fafafa;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+
+    #data div {
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #data div:last-child {
+      border-bottom: none;
+    }
+
+    #addDataForm {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    #addDataForm input {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+
+    #addDataForm button {
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 4px;
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    #addDataForm button:hover {
+      background-color: #0056b3;
+    }
+
+    .delete-btn {
+      background-color: #ff4d4d;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 10px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .delete-btn:hover {
+      background-color: #e60000;
+    }
+  </style>
 </head>
 <body>
-  <h1>Shared Data App</h1>
-  <div id="data"></div>
+  <div class="container">
+    <h1>Shared Data App</h1>
+    <div id="data"></div>
   
-  <form id="addDataForm">
-    <input type="text" id="name" placeholder="Name" required>
-    <input type="text" id="phone" placeholder="Phone" required>
-    <input type="text" id="email" placeholder="Email" required>
-    <button type="submit">Add Entry</button>
-  </form>
+    <form id="addDataForm">
+      <input type="text" id="name" placeholder="Name" required>
+      <input type="text" id="phone" placeholder="Phone" required>
+      <input type="text" id="email" placeholder="Email" required>
+      <button type="submit">Add Entry</button>
+    </form>
+  </div>
 
   <script>
     const url = 'https://api.sheety.co/c4a6cc843512326bb78a7e7d6fedd4d8/finance/sheet1';
+    let cachedData = []; // Local cache for data
 
     async function fetchData() {
       try {
         const response = await fetch(url);
         const data = await response.json();
-        displayData(data.sheet1); // Access the array directly
+        cachedData = data.sheet1;
+        displayData(cachedData); 
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -31,49 +125,59 @@
 
     function displayData(rows) {
       const dataDiv = document.getElementById('data');
-      dataDiv.innerHTML = ''; // Clear previous data
+      let htmlContent = ''; // Build HTML in a single string for faster updates
       rows.forEach(row => {
-        // Displaying each entry according to your format
-        const rowDiv = document.createElement('div');
-        rowDiv.textContent = `Name: ${row.name}, Phone: ${row.phone}, Email: ${row.email}`;
-        dataDiv.appendChild(rowDiv);
+        htmlContent += `
+          <div>
+            Name: ${row.name}, Phone: ${row.phone}, Email: ${row.email}
+            <button class="delete-btn" onclick="deleteEntry(${row.id})">Delete</button>
+          </div>
+        `;
       });
+      dataDiv.innerHTML = htmlContent; // Update DOM once
+    }
+
+    async function deleteEntry(id) {
+      try {
+        const deleteUrl = `${url}/${id}`;
+        const response = await fetch(deleteUrl, { method: 'DELETE' });
+        if (response.ok) {
+          cachedData = cachedData.filter(row => row.id !== id); // Update cache
+          displayData(cachedData); // Update displayed data
+        } else {
+          console.error("Error deleting data:", response.statusText);
+        }
+      } catch (error) {
+        console.error("Error deleting data:", error);
+      }
     }
 
     document.getElementById('addDataForm').addEventListener('submit', async (e) => {
-      e.preventDefault(); // Prevent form submission
+      e.preventDefault(); 
       const nn = document.getElementById('name').value;
       const phoneq = document.getElementById('phone').value;
       const emailq = document.getElementById('email').value;
-        var id = 100;
+
       const body = {
-        sheet1: {
-          name: nn,
-          phone: phoneq,
-          email: emailq,
-          id:{id}
-        }
+        sheet1: { name: nn, phone: phoneq, email: emailq }
       };
 
       try {
         const response = await fetch(url, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body)
         });
 
         const json = await response.json();
-        console.log(json.sheet1); // Log the response for debugging
-        fetchData(); // Refresh the displayed data after adding
+        cachedData.push(json.sheet1); // Update cache with new entry
+        displayData(cachedData); // Display updated data without fetching
       } catch (error) {
         console.error("Error adding data:", error);
       }
     });
 
-    // Fetch and display data on load
-    fetchData();
+    fetchData(); // Initial data fetch on load
   </script>
 </body>
 </html>
