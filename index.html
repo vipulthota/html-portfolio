@@ -1,58 +1,79 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resume</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shared Data App</title>
 </head>
 <body>
-    <h1>Vipul Thota</h1>
-    <img src="./1695555410540-removebg-preview.png" alt="my courses" height="250">
-    <hr/>
-    <h2>Profile</h2>
-    <p>I am a highly motivated and CSE student with a good academic record. I am passionate about computer
-        science and have a good understanding of core concepts such as programming, data structures, and
-        algorithms. I like to explore concepts of various programming languages.
-        </p>
-    <hr/>
-    <h2>Education</h2>
-    <ul>
-        <l>B-Tech, Computer Science and Engineering - Mahindra University</l>
-    </ul>
-    <hr>
-    <h2>Academic Projects</h2>
-    <ul>
-        <li>
-            <h3>Machine Learning Project</h3>
-            <p>Understanding Networks Though clustering
-                 Leveraging Local Node Features for Structural Analysis for Facebook data set</p>
-        </li>
-        <li>
-            <h3>Website Cloning            </h3>
-            <p>Using HTML and CSS creating an Website</p>
-        </li>
-        <li>
-            <h3>Game using Python          </h3>
-            <p>Developed an Snake Game using Python
-                In this snake's body grows longer as it consumes food.
-                </p>
-        </li>
-    </ul>
-    <hr>
-    <h2>Skills</h2>
-    <ul>
-        <li>C/C++ :⭐️⭐️⭐️⭐️⭐️</li>
-        <li>Java:⭐️⭐️⭐️⭐️</li>
-        <li>Python:⭐️⭐️⭐️⭐️⭐️</li>
-        <li>Data Structures And Algorithms:⭐️⭐️⭐️⭐️⭐️</li>
-    </ul>
-    <h2>Others</h2>
-    <ul>
-        <li>
-            <a href="./contactme.html">Contact Me</a>
-        </li>
-    </ul>
-    <footer>
-        <p>© Vipul Thota. All rights reserved.</p>
-    </footer>
+  <h1>Shared Data App</h1>
+  <div id="data"></div>
+  
+  <form id="addDataForm">
+    <input type="text" id="name" placeholder="Name" required>
+    <input type="text" id="phone" placeholder="Phone" required>
+    <input type="text" id="email" placeholder="Email" required>
+    <button type="submit">Add Entry</button>
+  </form>
+
+  <script>
+    const url = 'https://api.sheety.co/c4a6cc843512326bb78a7e7d6fedd4d8/finance/sheet1';
+
+    async function fetchData() {
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        displayData(data.sheet1); // Access the array directly
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    }
+
+    function displayData(rows) {
+      const dataDiv = document.getElementById('data');
+      dataDiv.innerHTML = ''; // Clear previous data
+      rows.forEach(row => {
+        // Displaying each entry according to your format
+        const rowDiv = document.createElement('div');
+        rowDiv.textContent = `Name: ${row.name}, Phone: ${row.phone}, Email: ${row.email}`;
+        dataDiv.appendChild(rowDiv);
+      });
+    }
+
+    document.getElementById('addDataForm').addEventListener('submit', async (e) => {
+      e.preventDefault(); // Prevent form submission
+      const nn = document.getElementById('name').value;
+      const phoneq = document.getElementById('phone').value;
+      const emailq = document.getElementById('email').value;
+        var id = 100;
+      const body = {
+        sheet1: {
+          name: nn,
+          phone: phoneq,
+          email: emailq,
+          id:{id}
+        }
+      };
+
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(body)
+        });
+
+        const json = await response.json();
+        console.log(json.sheet1); // Log the response for debugging
+        fetchData(); // Refresh the displayed data after adding
+      } catch (error) {
+        console.error("Error adding data:", error);
+      }
+    });
+
+    // Fetch and display data on load
+    fetchData();
+  </script>
 </body>
 </html>
